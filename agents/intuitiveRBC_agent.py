@@ -11,7 +11,7 @@ def intuitive_policy(observation, action_space, saisons = True):
     
     action = 0.0 # Default value
     # Si l'électricité ne coûte pas cher et est décarbonnée
-    if electricty_price < 0.27 and carbon_density < 0.16 and battery_storage < 6:
+    if electricty_price < 0.27 and carbon_density < 0.16:
         if month >= 4 and month <= 9 and saisons:
             action = 0.2
         else :

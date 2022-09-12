@@ -4,7 +4,7 @@ def nobattery_policy(observation, action_space):
     """
     We never use the battery
     """
-    action = 0.0 # Default value
+    action = 0 # Default value
     action = np.array([action], dtype=action_space.dtype)
     assert action_space.contains(action)
     return action
