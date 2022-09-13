@@ -15,19 +15,22 @@ def argmax(q_values):
             if q_values[i] == top:
                 ties.append(i)
 
-        return np.random.choice(ties)
+        dist_to_middle = [abs(ties[i] - len(q_values)/2) for i in range(len(ties))]
+
+        return ties[np.argmin(dist_to_middle)]
+        # return np.random.choice(ties)
 
 
-class TrainingAgent:
+class TrainingDiscreteSarsaAgent:
     """
     The first training trial
     """
 
     def __init__(self):
         self.action_space = {}
-        self.discrete_action_space = np.arange(start = -0.5, stop = 0.6, step = 0.1)
+        self.discrete_action_space = np.arange(start = -0.1, stop = 0.11, step = 0.01)
         self.state = (0, 0, 0, 0, 0)
-        self.action_id = 10
+        self.action_id = len(self.discrete_action_space)//2
         self.months = [i for i in range(1, 13)]
         self.hours = [i for i in range(1, 25)]
         self.carbon_densities = [0, 0.13, 0.15, 0.18]
@@ -37,7 +40,10 @@ class TrainingAgent:
         self.alpha = 0.1
         self.epsilon = 0.01
         self.prev_state = (0, 0, 0, 0, 0)
-        self.prev_action_id = 10
+        self.prev_action_id = len(self.discrete_action_space)//2
+        self.algorithm = "SARSA"
+        self.choices = [0] * len(self.discrete_action_space)
+        self.discount = 0.9
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -67,20 +73,27 @@ class TrainingAgent:
         else:
             self.action_id = argmax(self.q_values[self.state][:])
             action = self.discrete_action_space[self.action_id]
+        
+        self.choices[self.action_id] += 1
 
         # Q-Values update
-        self.q_values[self.state][self.action_id] += self.alpha*(get_reward(observation[23], observation[19]*observation[23], observation[23]*observation[24], agent_id) + self.q_values[self.state][self.action_id] - self.q_values[self.prev_state][self.prev_action_id])
+        if self.algorithm == "SARSA":
+            self.q_values[self.state][self.action_id] += self.alpha*(self.discount * get_reward(observation[23], observation[19]*observation[23], observation[23]*observation[24], agent_id) + self.q_values[self.state][self.action_id] - self.q_values[self.prev_state][self.prev_action_id])
+        elif self.algorithm == "Q-learning":
+            self.q_values[self.state][self.action_id] += self.alpha*(self.discount * get_reward(observation[23], observation[19]*observation[23], observation[23]*observation[24], agent_id) + max(self.q_values[self.state][:]) - self.q_values[self.prev_state][self.prev_action_id])
 
         # Saving RL model
         if observation[0] == 7 and observation[1] == 1 and observation[2] == 23:
             np.save('qvalues.npy', self.q_values)
+            print(self.choices)
+            input()
 
         return np.array([action], dtype=self.action_space[agent_id].dtype)
 
-class TrainedAgent:
+class TrainedSarsaAgent:
     def __init__(self):
         self.action_space = {}
-        self.discrete_action_space = np.arange(start = -0.5, stop = 0.6, step = 0.1)
+        self.discrete_action_space = np.arange(start = -0.5, stop = 0.6, step = 0.05)
         self.state = (0, 0, 0, 0, 0)
         self.action_id = 10
         self.months = [i for i in range(1, 13)]
@@ -88,7 +101,7 @@ class TrainedAgent:
         self.carbon_densities = [0, 0.13, 0.15, 0.18]
         self.costs = [0, 0.3]
         self.battery_storages = [0, 0.25, 0.5, 0.75]
-        self.q_values = np.zeros((len(self.months), len(self.hours), len(self.carbon_densities), len(self.costs), len(self.battery_storages), len(self.discrete_action_space)))
+        self.q_values = np.load("qvalues.npy")
         self.alpha = 0.1
         self.epsilon = 0.01
         self.prev_state = (0, 0, 0, 0, 0)
@@ -100,10 +113,6 @@ class TrainedAgent:
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
-        # Save previous state and action
-        self.prev_action_id = self.action_id
-        self.prev_state = self.state
-
         # Get state
         month = observation[0]
         hour = observation[2]
@@ -113,21 +122,7 @@ class TrainedAgent:
         self.state = (month - 1, hour - 1, carbon_density, cost, battery_storage)
 
         # Action choice
-        if np.random.random() < self.epsilon:
-            self.action_id = np.random.randint(0, len(self.discrete_action_space))
-            action = self.discrete_action_space[self.action_id]
-            # print("State : {0}".format(self.state))
-            # print("Action values : {}".format(self.q_values[self.state][:]))
-            # input()
-        else:
-            self.action_id = argmax(self.q_values[self.state][:])
-            action = self.discrete_action_space[self.action_id]
-
-        # Q-Values update
-        self.q_values[self.state][self.action_id] += self.alpha*(get_reward(observation[23], observation[19]*observation[23], observation[23]*observation[24], agent_id) + self.q_values[self.state][self.action_id] - self.q_values[self.prev_state][self.prev_action_id])
-
-        # Saving RL model
-        if observation[0] == 7 and observation[1] == 1 and observation[2] == 23:
-            np.save('qvalues.npy', self.q_values)
+        self.action_id = argmax(self.q_values[self.state][:])
+        action = self.discrete_action_space[self.action_id]
 
         return np.array([action], dtype=self.action_space[agent_id].dtype)

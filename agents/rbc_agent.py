@@ -1,9 +1,14 @@
 import numpy as np
+import csv
 
 def rbc_policy(observation, action_space):
     """
     Simple rule based policy based on day or night time
     """
+    with open('observations.csv', 'a', newline = "") as csvfile:
+            writer = csv.writer(csvfile, delimiter=";")
+            writer.writerow(observation)
+
     hour = observation[2] # Hour index is 2 for all observations
     
     action = 0.0 # Default value
