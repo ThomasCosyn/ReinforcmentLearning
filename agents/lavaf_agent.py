@@ -32,7 +32,7 @@ class LavafAgent:
         self.state = np.zeros((31,))
         self.prev_state = np.zeros((31,))
         self.epsilon = 0.01
-        self.alpha = 0.05
+        self.alpha = 0.1
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -59,7 +59,7 @@ class LavafAgent:
 
         # Action choice
         #discrete_action_space = np.linspace(-1, 1, num = 100)
-        discrete_action_space = norm.rvs(0, 0.1, 100)
+        discrete_action_space = norm.rvs(0, 0.2, 100)
         if np.random.random() < self.epsilon:
             self.action_id = np.random.randint(0, len(discrete_action_space))
         else:
