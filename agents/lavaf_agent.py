@@ -59,7 +59,7 @@ class LavafAgent:
 
         # Action choice
         #discrete_action_space = np.linspace(-1, 1, num = 100)
-        discrete_action_space = norm.rvs(0, 0.2, 100)
+        discrete_action_space = norm.rvs(0, 0.1, 100)
         if np.random.random() < self.epsilon:
             self.action_id = np.random.randint(0, len(discrete_action_space))
         else:
