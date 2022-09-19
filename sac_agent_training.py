@@ -2,6 +2,7 @@ from citylearn.citylearn import CityLearnEnv
 from stable_baselines3 import SAC
 import gym
 import numpy as np
+import itertools
 
 class Constants:
     episodes = 3
@@ -29,11 +30,14 @@ def env_reset(env):
                 "observation": observations }
     return obs_dict
 
+# index_commun = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
 index_commun = [0, 2, 19, 4, 8, 24]
 index_particular = [20, 21, 22, 23]
-normalization_value_commun = [12, 24, 2, 100, 100, 1]
-normalization_value_particular = [5, 5, 5, 5]
-len_tot_index = len(index_commun) + len(index_particular) * 5
+normalization_value_commun = [12, 24, 0.29, 32.2, 100, 0.54]
+#normalization_value_commun = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
+normalization_value_particular = [8, 4, 1, 7.5]
+normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
+lentot = len(index_commun) + len(index_particular) * 5
 
 class EnvCityGym(gym.Env):
     """
@@ -49,7 +53,7 @@ class EnvCityGym(gym.Env):
         self.action_space = gym.spaces.Box(low=np.array([-1] * self.num_buildings), high=np.array([1] * self.num_buildings), dtype=np.float32)
 
         # define the observation space
-        self.observation_space = gym.spaces.Box(low=np.array([0] * len_tot_index), high=np.array([1] * len_tot_index), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([0] * lentot), high=np.array([1] * lentot), dtype=np.float32)
 
         # TO THINK : normalize the observation space
 
@@ -77,6 +81,7 @@ class EnvCityGym(gym.Env):
         observation_particular = list(itertools.chain(*observation_particular))
         # we concatenate the observation
         observation = observation_commun + observation_particular
+        #observation = []
 
         return observation
 
@@ -94,21 +99,25 @@ class EnvCityGym(gym.Env):
 
         return observation, sum(reward), done, info
         
-    def render(self, mode='human'):
-        return self.env.render(mode)
+    def render(self): #, mode='human'):
+        return self.env.render()
 
 # Définition de l'environnement
 env = CityLearnEnv(schema=Constants.schema_path)
 env = EnvCityGym(env)
 
 model = SAC("MlpPolicy", env, verbose = 1)
-model.learn(total_timesteps=100, log_interval=1)
+model.learn(total_timesteps=10000, log_interval=1)
 model.save("sac_citylearn1")
 
-obs = env.reset()
-while True:
-    action, _states = model.predict(obs, deterministic=True)
-    obs, reward, done, info = env.step(action)
-    env.render()
-    if done:
-        obs = env.reset()
+print("Training over")
+
+# model = SAC.load("sac_citylearn1")
+
+# obs = env.reset()
+# while True:
+#     action, _states = model.predict(obs, deterministic=True)
+#     obs, reward, done, info = env.step(action)
+#     env.render()
+#     if done:
+#         obs = env.reset()
