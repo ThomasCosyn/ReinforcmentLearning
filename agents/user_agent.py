@@ -11,4 +11,4 @@ from agents.lavaf_agent import LavafAgent
 ###################################################################
 
 # UserAgent = RandomAgent
-UserAgent = RandomAgent
+UserAgent = NoBatteryAgent
