@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 
 from rewards.get_reward import get_reward
 
@@ -59,7 +58,7 @@ class LavafAgent:
 
         # Action choice
         #discrete_action_space = np.linspace(-1, 1, num = 100)
-        discrete_action_space = norm.rvs(0, 0.1, 100)
+        discrete_action_space = np.random.normal(0, 0.1, 100)
         if np.random.random() < self.epsilon:
             self.action_id = np.random.randint(0, len(discrete_action_space))
         else:
