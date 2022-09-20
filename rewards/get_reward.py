@@ -28,9 +28,16 @@ def get_reward(electricity_consumption: List[float], carbon_emission: List[float
 
         # *********** BEGIN EDIT ***********
         # Replace with custom reward calculation
+        
+        # First reward
         carbon_emission = np.array(carbon_emission).clip(min=0)
         electricity_price = np.array(electricity_price).clip(min=0)
         reward = (carbon_emission + electricity_price)*-1
+
+        # electricity_consumption = np.array([sum(electricity_consumption)] * len(agent_ids))
+        # electricity_price = np.array(electricity_price).clip(min = 0)
+        # carbon_emission = np.array(carbon_emission).clip(min = 0)
+        # reward = (carbon_emission + electricity_consumption + electricity_price)*-1
         # ************** END ***************
         
         return reward

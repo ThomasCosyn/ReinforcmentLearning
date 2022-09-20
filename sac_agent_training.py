@@ -108,7 +108,7 @@ env = EnvCityGym(env)
 
 model = SAC("MlpPolicy", env, verbose = 1)
 model.learn(total_timesteps=10000, log_interval=1)
-model.save("sac_citylearn1")
+model.save("sac_citylearn2")
 
 print("Training over")
 
