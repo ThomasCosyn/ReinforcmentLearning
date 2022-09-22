@@ -1,5 +1,6 @@
 from citylearn.citylearn import CityLearnEnv
-from stable_baselines3 import SAC
+from stable_baselines3 import SAC, td3, ppo, A2C, DDPG
+from sb3_contrib import TQC
 import gym
 import numpy as np
 import itertools
@@ -30,13 +31,24 @@ def env_reset(env):
                 "observation": observations }
     return obs_dict
 
-# index_commun = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
-index_commun = [0, 2, 19, 4, 8, 24]
+# Notebook features
+# index_commun = [0, 2, 19, 4, 8, 24]
+# index_particular = [20, 21, 22, 23]
+# normalization_value_commun = [12, 24, 0.29, 32.2, 100, 0.54]
+# normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
+
+# All features
+# index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
+# index_particular = [20, 21, 22, 23]
+# normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
+# normalization_value_particular = [8, 4, 1, 7.5]
+
+# Linear regression feature seleciton
+index_commun = [0, 2, 19, 24, 25, 26, 27]
 index_particular = [20, 21, 22, 23]
-normalization_value_commun = [12, 24, 0.29, 32.2, 100, 0.54]
-#normalization_value_commun = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
+normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
 normalization_value_particular = [8, 4, 1, 7.5]
-normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
+
 lentot = len(index_commun) + len(index_particular) * 5
 
 class EnvCityGym(gym.Env):
@@ -106,9 +118,31 @@ class EnvCityGym(gym.Env):
 env = CityLearnEnv(schema=Constants.schema_path)
 env = EnvCityGym(env)
 
-model = SAC("MlpPolicy", env, verbose = 1)
-model.learn(total_timesteps=10000, log_interval=1)
-model.save("sac_citylearn2")
+# Choix de l'algorithme
+algo = 'TQC'
+
+if algo == 'SAC':  
+    model = SAC("MlpPolicy", env, verbose = 1)
+elif algo == 'TD3':
+    model = td3.TD3("MlpPolicy", env, verbose = 1)
+elif algo == 'PPO':
+    model = ppo.PPO("MlpPolicy", env, verbose = 1)
+elif algo == 'A2C':
+    model = A2C("MlpPolicy", env, verbose = 1)
+elif algo == 'DDPG':
+    model = DDPG("MlpPolicy", env, verbose = 1)
+elif algo == "TQC":
+    model = TQC("MlpPolicy", env, verbose = 1)
+else:
+    raise ("Please set algo variable either to SAC, TD3, PPO, A2C, DDPG, TQC")
+
+# Apprentissage
+e = int(input("Entrer le nombre d'épisodes : "))
+model.learn(total_timesteps=e*365*24, log_interval=1)
+
+# Saving the model
+name = algo + str(e)
+model.save(name)
 
 print("Training over")
 
