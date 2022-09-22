@@ -1,6 +1,7 @@
-from stable_baselines3 import SAC, td3, PPO, DDPG
+from stable_baselines3 import SAC, td3, PPO, DDPG, A2C
 import numpy as np
 import itertools
+from sb3_contrib import TQC
 
 class SACAgent:
     

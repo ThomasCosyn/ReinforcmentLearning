@@ -1,6 +1,6 @@
 from citylearn.citylearn import CityLearnEnv
 from stable_baselines3 import SAC, td3, ppo, A2C, DDPG
-from sb3_contrib import TQC
+from sb3_contrib import TQC, TRPO
 import gym
 import numpy as np
 import itertools
@@ -119,7 +119,7 @@ env = CityLearnEnv(schema=Constants.schema_path)
 env = EnvCityGym(env)
 
 # Choix de l'algorithme
-algo = 'TQC'
+algo = 'PPO'
 
 if algo == 'SAC':  
     model = SAC("MlpPolicy", env, verbose = 1)
@@ -128,11 +128,13 @@ elif algo == 'TD3':
 elif algo == 'PPO':
     model = ppo.PPO("MlpPolicy", env, verbose = 1)
 elif algo == 'A2C':
-    model = A2C("MlpPolicy", env, verbose = 1)
+    model = A2C("MlpPolicy", env, verbose = 2)
 elif algo == 'DDPG':
     model = DDPG("MlpPolicy", env, verbose = 1)
 elif algo == "TQC":
     model = TQC("MlpPolicy", env, verbose = 1)
+elif algo == 'TRPO':
+    model = TRPO("MlpPolicy", env, verbose = 1)
 else:
     raise ("Please set algo variable either to SAC, TD3, PPO, A2C, DDPG, TQC")
 
