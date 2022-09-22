@@ -119,7 +119,7 @@ env = CityLearnEnv(schema=Constants.schema_path)
 env = EnvCityGym(env)
 
 # Choix de l'algorithme
-algo = 'PPO'
+algo = 'TQC'
 
 if algo == 'SAC':  
     model = SAC("MlpPolicy", env, verbose = 1)
