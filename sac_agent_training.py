@@ -38,18 +38,18 @@ def env_reset(env):
 # normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
 
 # All features
-index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
-index_particular = [20, 21, 22, 23]
-normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
-normalization_value_particular = [8, 4, 1, 7.5]
-
-# Linear regression feature seleciton
-# index_commun = [0, 2, 19, 24, 25, 26, 27]
+# index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
 # index_particular = [20, 21, 22, 23]
-# normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
+# normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
 # normalization_value_particular = [8, 4, 1, 7.5]
 
-lentot = len(index_commun) + len(index_particular) * 5
+# Linear regression feature seleciton
+index_commun = [0, 2, 19, 24, 25, 26, 27]
+index_particular = [20, 21, 22, 23]
+normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
+normalization_value_particular = [8, 4, 1, 7.5]
+
+lentot = len(index_commun) + len(index_particular) * 10
 
 class EnvCityGym(gym.Env):
     """
@@ -137,10 +137,10 @@ class CustomEnvCityLearn(gym.Env):
         self.num_buildings = len(env.action_space)
 
         # define action and observation space
-        self.action_space = gym.spaces.Box(low=np.array([-1] * self.num_buildings), high=np.array([1] * self.num_buildings), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=np.array([-1] * 7), high=np.array([1] * 7), dtype=np.float32)
 
         # define the observation space
-        self.observation_space = gym.spaces.Box(low=0, high=1, dtype=np.float32, shape = (self.num_buildings, 28))
+        self.observation_space = gym.spaces.Box(low=0, high=1, dtype=np.float32, shape = (lentot,))
 
     def reset(self):
         obs_dict = env_reset(self.env)
@@ -155,6 +155,16 @@ class CustomEnvCityLearn(gym.Env):
         return observation
 
     def get_observation(self, obs):
+
+        observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
+        observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in obs]
+        
+        # Si on a que 5 buildings, on "simule" deux buildings fictifs en ajoutant du bruit à la moyenne des mesures des 5 autres
+        if len(obs) == 5:
+            b6 = [np.mean([observation_particular[i][j] for i in range(len(obs))]) for j in range(len(obs[0]))]
+            b7 = [np.mean([observation_particular[i][j] for i in range(len(obs))]) for j in range(len(obs[0]))]
+
+        observation_particular = list(itertools.chain(*observation_particular))
 
         return obs
 
@@ -181,8 +191,8 @@ class CustomEnvCityLearn(gym.Env):
 
 # Définition de l'environnement
 env = CityLearnEnv(schema=Constants.schema_path)
-#env = EnvCityGym(env)
-env = CustomEnvCityLearn(env)
+env = EnvCityGym(env)
+#env = CustomEnvCityLearn(env)
 
 # Choix de l'algorithme
 algo = 'PPO'
