@@ -46,10 +46,13 @@ class SACAgent:
         observation_commun = [observation[0][i]/n for i,n in zip(index_commun, normalization_value_commun)]
         observation_particular = [[o[i]/n for i,n in zip(index_particular, normalization_value_particular) for o in observation]]
         observation_particular = list(itertools.chain(*observation_particular))
-        observation = observation_commun + observation_particular
-
-        model = PPO.load("PPO2")
-        action, _states = model.predict(observation, deterministic=True)
+        obs = observation_commun + observation_particular
+        
+        if len(observation) == 5:
+            model = PPO.load("PPO2_5")
+        elif len(observation) == 10:
+            model = PPO.load("PPO2_10")
+        action, _states = model.predict(obs, deterministic=True)
         action = [np.array([a], dtype=self.action_space[0].dtype) for a in action]
         return action
         

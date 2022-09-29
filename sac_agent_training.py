@@ -49,7 +49,9 @@ index_particular = [20, 21, 22, 23]
 normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
 normalization_value_particular = [8, 4, 1, 7.5]
 
-lentot = len(index_commun) + len(index_particular) * 10
+nb_buildings = int(input("Entrer le nombre de buildings : "))
+
+lentot = len(index_commun) + len(index_particular) * nb_buildings
 
 class EnvCityGym(gym.Env):
     """
@@ -190,7 +192,7 @@ class CustomEnvCityLearn(gym.Env):
         return self.env.render()
 
 # Définition de l'environnement
-env = CityLearnEnv(schema=Constants.schema_path)
+env = CityLearnEnv(schema='./data/citylearn_challenge_2022_phase_1/schema_{}.json'.format(nb_buildings))
 env = EnvCityGym(env)
 #env = CustomEnvCityLearn(env)
 
@@ -219,7 +221,7 @@ e = int(input("Entrer le nombre d'épisodes : "))
 model.learn(total_timesteps=e*365*24, log_interval=1)
 
 # Saving the model
-name = algo + str(e)
+name = algo + str(e) + "_" + str(nb_buildings)
 model.save(name)
 
 print("Training over")
