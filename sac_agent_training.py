@@ -38,16 +38,16 @@ def env_reset(env):
 # normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
 
 # All features
-# index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
-# index_particular = [20, 21, 22, 23]
-# normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
-# normalization_value_particular = [8, 4, 1, 7.5]
+index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
+index_particular = [20, 21, 22, 23]
+normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
+normalization_value_particular = [8, 4, 1, 7.5]
 
 # Linear regression feature seleciton
-index_commun = [0, 2, 19, 24, 25, 26, 27]
-index_particular = [20, 21, 22, 23]
-normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
-normalization_value_particular = [8, 4, 1, 7.5]
+# index_commun = [0, 2, 19, 24, 25, 26, 27]
+# index_particular = [20, 21, 22, 23]
+# normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
+# normalization_value_particular = [8, 4, 1, 7.5]
 
 lentot = len(index_commun) + len(index_particular) * 5
 
@@ -73,6 +73,10 @@ class EnvCityGym(gym.Env):
         obs_dict = env_reset(self.env)
         obs = self.env.reset()
 
+        # observation = []
+        # for i in range(self.num_buildings):
+        #     observation.append(self.get_observation(obs, i))
+
         observation = self.get_observation(obs)
 
         return observation
@@ -89,8 +93,12 @@ class EnvCityGym(gym.Env):
         # we get the observation commun for each building (index_commun)
         observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
         observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in obs]
-
         observation_particular = list(itertools.chain(*observation_particular))
+
+        # 1 building
+        # observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
+        # observation_particular = [obs[agent_id][i]/n for i, n in zip(index_particular, normalization_value_particular)]
+
         # we concatenate the observation
         observation = observation_commun + observation_particular
         #observation = []
@@ -107,6 +115,10 @@ class EnvCityGym(gym.Env):
         # we do a step in the environment
         obs, reward, done, info = self.env.step(action)
 
+        # observation = []
+        # for i in range(len(obs)):
+        #     observation.self.get_observation(obs, i)
+
         observation = self.get_observation(obs)
 
         return observation, sum(reward), done, info
@@ -114,12 +126,48 @@ class EnvCityGym(gym.Env):
     def render(self): #, mode='human'):
         return self.env.render()
 
+class CustomEnvCityLearn(gym.Env):
+
+    def __init__(self, env):
+        self.env = env
+        self.num_buildings = len(env.action_space)
+        self.action_space = gym.spaces.Box(low=np.array([-1]), high=np.array([1]), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([0] * lentot), high=np.array([1] * lentot), dtype=np.float32)
+
+    def reset(self):
+        obs = self.env.reset()
+        observation = []
+        for i in range(len(obs)):
+            observation.append(self.get_observation(obs, i))
+        return observation
+
+    def step(self, action):
+        action = [[act] for act in action]
+        obs, reward, done, info = self.env.step(action)
+
+        observation = []
+        for i in range(len(obs)):
+            observation.append(self.get_observation(obs, i))
+
+        return observation, sum(reward), done, info
+
+    def get_observation(self, obs, building_id):
+        observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
+        observation_particular = [obs[building_id][i]/n for i, n in zip(index_particular, normalization_value_particular)]
+        observation = observation_commun + observation_particular
+        return observation
+        
+    
+    def render(self):
+        return self.env.render()
+
 # Définition de l'environnement
 env = CityLearnEnv(schema=Constants.schema_path)
 env = EnvCityGym(env)
+#env = CustomEnvCityLearn(env)
 
 # Choix de l'algorithme
-algo = 'TQC'
+algo = 'PPO'
 
 if algo == 'SAC':  
     model = SAC("MlpPolicy", env, verbose = 1)
