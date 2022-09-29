@@ -127,44 +127,62 @@ class EnvCityGym(gym.Env):
         return self.env.render()
 
 class CustomEnvCityLearn(gym.Env):
-
+    """
+    Env wrapper coming from the gym library.
+    """
     def __init__(self, env):
         self.env = env
+
+        # get the number of buildings
         self.num_buildings = len(env.action_space)
-        self.action_space = gym.spaces.Box(low=np.array([-1]), high=np.array([1]), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(low=np.array([0] * lentot), high=np.array([1] * lentot), dtype=np.float32)
+
+        # define action and observation space
+        self.action_space = gym.spaces.Box(low=np.array([-1] * self.num_buildings), high=np.array([1] * self.num_buildings), dtype=np.float32)
+
+        # define the observation space
+        self.observation_space = gym.spaces.Box(low=0, high=1, dtype=np.float32, shape = (self.num_buildings, 28))
 
     def reset(self):
+        obs_dict = env_reset(self.env)
         obs = self.env.reset()
-        observation = []
-        for i in range(len(obs)):
-            observation.append(self.get_observation(obs, i))
+
+        # observation = []
+        # for i in range(self.num_buildings):
+        #     observation.append(self.get_observation(obs, i))
+
+        observation = self.get_observation(obs)
+
         return observation
+
+    def get_observation(self, obs):
+
+        return obs
 
     def step(self, action):
+        """
+        we apply the same action for all the buildings
+        """
+        # reprocessing action
         action = [[act] for act in action]
+
+        # we do a step in the environment
         obs, reward, done, info = self.env.step(action)
 
-        observation = []
-        for i in range(len(obs)):
-            observation.append(self.get_observation(obs, i))
+        # observation = []
+        # for i in range(len(obs)):
+        #     observation.self.get_observation(obs, i)
+
+        observation = self.get_observation(obs)
 
         return observation, sum(reward), done, info
-
-    def get_observation(self, obs, building_id):
-        observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
-        observation_particular = [obs[building_id][i]/n for i, n in zip(index_particular, normalization_value_particular)]
-        observation = observation_commun + observation_particular
-        return observation
         
-    
-    def render(self):
+    def render(self): #, mode='human'):
         return self.env.render()
 
 # Définition de l'environnement
 env = CityLearnEnv(schema=Constants.schema_path)
-env = EnvCityGym(env)
-#env = CustomEnvCityLearn(env)
+#env = EnvCityGym(env)
+env = CustomEnvCityLearn(env)
 
 # Choix de l'algorithme
 algo = 'PPO'
