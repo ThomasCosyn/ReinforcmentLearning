@@ -49,7 +49,7 @@ def evaluate():
 
     step_start = time.perf_counter()
     actions = agent.register_reset(obs_dict)
-    agent_time_elapsed += time.perf_counter()- step_start
+    agent_time_elapsed += time.perf_counter() - step_start
 
     episodes_completed = 0
     num_steps = 0

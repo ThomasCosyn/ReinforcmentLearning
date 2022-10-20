@@ -34,23 +34,24 @@ class SACAgent:
         # normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
         # normalization_value_particular = [8, 4, 1, 7.5]
 
-        if agent_id:
+        if agent_id != None:
             observation_commun = [observation[i]/n for i, n in zip(index_commun, normalization_value_commun)]
-            observation_particular = [observation[agent_id][i]/n for i, n in zip(index_particular, normalization_value_particular)]
+            observation_particular = [observation[i]/n for i, n in zip(index_particular, normalization_value_particular)]
             observation = observation_commun + observation_particular
 
-            model = PPO.load("PPO2")
+            model = PPO.load("PPO2_{}".format(len(observation)))
             action, _states = model.predict(observation, deterministic=True)
             return action
 
-        observation_commun = [observation[0][i]/n for i,n in zip(index_commun, normalization_value_commun)]
-        observation_particular = [[o[i]/n for i,n in zip(index_particular, normalization_value_particular) for o in observation]]
-        observation_particular = list(itertools.chain(*observation_particular))
-        obs = observation_commun + observation_particular
-        
-        model = PPO.load("PPO2_{}".format(len(observation)))
+        else:
+            observation_commun = [observation[0][i]/n for i,n in zip(index_commun, normalization_value_commun)]
+            observation_particular = [[o[i]/n for i,n in zip(index_particular, normalization_value_particular) for o in observation]]
+            observation_particular = list(itertools.chain(*observation_particular))
+            obs = observation_commun + observation_particular
+            
+            model = PPO.load("PPO2_{}".format(len(observation)))
 
-        action, _states = model.predict(obs, deterministic=True)
-        action = [np.array([a], dtype=self.action_space[0].dtype) for a in action]
-        return action
+            action, _states = model.predict(obs, deterministic=True)
+            action = [np.array([a], dtype=self.action_space[0].dtype) for a in action]
+            return action
         

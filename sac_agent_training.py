@@ -4,6 +4,7 @@ from sb3_contrib import TQC, TRPO
 import gym
 import numpy as np
 import itertools
+import supersuit as ss
 
 class Constants:
     episodes = 3
@@ -194,7 +195,6 @@ class CustomEnvCityLearn(gym.Env):
 # Définition de l'environnement
 env = CityLearnEnv(schema='./data/citylearn_challenge_2022_phase_1/schema_{}.json'.format(nb_buildings))
 env = EnvCityGym(env)
-#env = CustomEnvCityLearn(env)
 
 # Choix de l'algorithme
 algo = 'PPO'
