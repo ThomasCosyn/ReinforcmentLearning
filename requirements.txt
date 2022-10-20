@@ -3,3 +3,4 @@ stable_baselines3
 cloudpickle
 pickle5
 sb3_contrib
+sklearn
