@@ -204,7 +204,7 @@ if algo == 'SAC':
 elif algo == 'TD3':
     model = td3.TD3("MlpPolicy", env, verbose = 1)
 elif algo == 'PPO':
-    model = ppo.PPO("MlpPolicy", env, verbose = 1)
+    model = ppo.PPO("MlpPolicy", env, verbose = 1, gamma = 0.96)
 elif algo == 'A2C':
     model = A2C("MlpPolicy", env, verbose = 2)
 elif algo == 'DDPG':
