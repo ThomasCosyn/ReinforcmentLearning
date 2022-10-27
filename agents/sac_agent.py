@@ -16,36 +16,62 @@ class SACAgent:
 
         # Reshape observation
 
-        # Notebook features
-        # index_commun = [0, 2, 19, 4, 8, 24]
-        # index_particular = [20, 21, 22, 23]
-        # normalization_value_commun = [12, 24, 0.29, 32.2, 100, 0.54]
-        # normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
-
         # All features
         index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
         index_particular = [20, 21, 22, 23]
         normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
         normalization_value_particular = [8, 4, 1, 7.5]
 
-        # Linear regression feature seleciton
-        # index_commun = [0, 2, 19, 24, 25, 26, 27]
-        # index_particular = [20, 21, 22, 23]
-        # normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
-        # normalization_value_particular = [8, 4, 1, 7.5]
+        periodic_encoding = False
 
         if agent_id != None:
-            observation_commun = [observation[i]/n for i, n in zip(index_commun, normalization_value_commun)]
-            observation_particular = [observation[i]/n for i, n in zip(index_particular, normalization_value_particular)]
-            observation = observation_commun + observation_particular
+
+            if not periodic_encoding:
+                observation_commun = [observation[i]/n for i, n in zip(index_commun, normalization_value_commun)]
+
+            else:
+            # periodic normalization for hours and days
+                observation_commun = []
+                for i, n in zip(index_commun, normalization_value_commun):
+                    # if hours or months, periodic normalization
+                    if i in [0, 2]:
+                        x = (observation[i] * 2*np.pi) / n 
+                        cosx = np.cos(x)
+                        sinx = np.sin(x)
+                        observation_commun.append((1 + cosx)/2)
+                        observation_commun.append((1 + sinx)/2)
+                    # if not classical normalization
+                    else:
+                        observation_commun.append(observation[0][i]/n)
+            
+            observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in observation]
+            observation_particular = list(itertools.chain(*observation_particular))
+            obs = observation_commun + observation_particular
 
             model = PPO.load("PPO2_{}".format(len(observation)))
-            action, _states = model.predict(observation, deterministic=True)
+            action, _states = model.predict(obs, deterministic=True)
             return action
 
         else:
-            observation_commun = [observation[0][i]/n for i,n in zip(index_commun, normalization_value_commun)]
-            observation_particular = [[o[i]/n for i,n in zip(index_particular, normalization_value_particular) for o in observation]]
+            if not periodic_encoding:
+                observation_commun = [observation[0][i]/n for i,n in zip(index_commun, normalization_value_commun)]
+
+            else:
+                # periodic normalization for hours and days
+                observation_commun = []
+                for i, n in zip(index_commun, normalization_value_commun):
+                    # if hours or months, periodic normalization
+                    if i in [0, 2]:
+                        x = (observation[0][i] * 2*np.pi) / n 
+                        cosx = np.cos(x)
+                        sinx = np.sin(x)
+                        observation_commun.append((1 + cosx)/2)
+                        observation_commun.append((1 + sinx)/2)
+                    # if not classical normalization
+                    else:
+                        observation_commun.append(observation[0][i]/n)
+
+            observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in observation]
             observation_particular = list(itertools.chain(*observation_particular))
             obs = observation_commun + observation_particular
             

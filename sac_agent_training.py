@@ -52,7 +52,7 @@ normalization_value_particular = [8, 4, 1, 7.5]
 
 nb_buildings = int(input("Entrer le nombre de buildings : "))
 
-lentot = len(index_commun) + len(index_particular) * nb_buildings
+lentot = len(index_commun) + 2 + len(index_particular) * nb_buildings
 
 class EnvCityGym(gym.Env):
     """
@@ -94,7 +94,23 @@ class EnvCityGym(gym.Env):
         """
         
         # we get the observation commun for each building (index_commun)
-        observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
+        # observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
+        # observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in obs]
+        # observation_particular = list(itertools.chain(*observation_particular))
+
+        # periodic normalization for hours and days
+        observation_commun = []
+        for i, n in zip(index_commun, normalization_value_commun):
+            # if hours or months, periodic normalization
+            if i in [0, 2]:
+                x = (obs[0][i] * 2*np.pi) / n 
+                cosx = np.cos(x)
+                sinx = np.sin(x)
+                observation_commun.append((1 + cosx)/2)
+                observation_commun.append((1 + sinx)/2)
+            # if not classical normalization
+            else:
+                observation_commun.append(obs[0][i]/n)
         observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in obs]
         observation_particular = list(itertools.chain(*observation_particular))
 
@@ -204,7 +220,7 @@ if algo == 'SAC':
 elif algo == 'TD3':
     model = td3.TD3("MlpPolicy", env, verbose = 1)
 elif algo == 'PPO':
-    model = ppo.PPO("MlpPolicy", env, verbose = 1, gamma = 0.96)
+    model = ppo.PPO("MlpPolicy", env, verbose = 1)
 elif algo == 'A2C':
     model = A2C("MlpPolicy", env, verbose = 2)
 elif algo == 'DDPG':

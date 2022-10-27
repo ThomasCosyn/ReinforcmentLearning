@@ -10,34 +10,34 @@ import json
 #####                Specify your agent here                  #####
 ###################################################################
 
-def GenStateActionFromJson(JsonPath, BuildingCount = 5):
+# def GenStateActionFromJson(JsonPath, BuildingCount = 5):
 
-    with open(JsonPath) as json_file:
-        buildings_states_actions = json.load(json_file)
+#     with open(JsonPath) as json_file:
+#         buildings_states_actions = json.load(json_file)
 
-    States = buildings_states_actions['observations']
-    Actions = buildings_states_actions['actions']
+#     States = buildings_states_actions['observations']
+#     Actions = buildings_states_actions['actions']
 
-    StateINFo = {}
-    ActionINFo = {}
-    INFos = {}
+#     StateINFo = {}
+#     ActionINFo = {}
+#     INFos = {}
     
-    for var, ins in States.items():
-        #print(var, " <><> ", ins)
-        if ins['active']:
-            StateINFo[var] = ins['active']
-    for act, ins  in Actions.items():
-        if ins['active']:
-            ActionINFo[act] = ins['active']
+#     for var, ins in States.items():
+#         #print(var, " <><> ", ins)
+#         if ins['active']:
+#             StateINFo[var] = ins['active']
+#     for act, ins  in Actions.items():
+#         if ins['active']:
+#             ActionINFo[act] = ins['active']
 
-    INFos["states"] = StateINFo
-    INFos["action"] = ActionINFo
+#     INFos["states"] = StateINFo
+#     INFos["action"] = ActionINFo
 
-    return {"Building_" + str(key): INFos for key in range(1,BuildingCount+1)}
+#     return {"Building_" + str(key): INFos for key in range(1,BuildingCount+1)}
 
 
-JsonFile = 'data/citylearn_challenge_2022_phase_1/schema.json'
-BuildingsStatesActions = GenStateActionFromJson(JsonFile, BuildingCount = 5)
+# JsonFile = 'data/citylearn_challenge_2022_phase_1/schema.json'
+# BuildingsStatesActions = GenStateActionFromJson(JsonFile, BuildingCount = 5)
 #building_info = env.get_building_information()
 
 #params_agent = {'building_ids':["Building_"+str(i) for i in [1,2,3,4,5]],
