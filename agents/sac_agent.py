@@ -22,7 +22,7 @@ class SACAgent:
         normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
         normalization_value_particular = [8, 4, 1, 7.5]
 
-        periodic_encoding = False
+        periodic_encoding = True
 
         if agent_id != None:
 
