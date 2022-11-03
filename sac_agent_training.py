@@ -32,23 +32,11 @@ def env_reset(env):
                 "observation": observations }
     return obs_dict
 
-# Notebook features
-# index_commun = [0, 2, 19, 4, 8, 24]
-# index_particular = [20, 21, 22, 23]
-# normalization_value_commun = [12, 24, 0.29, 32.2, 100, 0.54]
-# normalization = [12, 7, 24, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 8, 4, 1, 7.5, 0.54, 0.54, 0.54, 0.54]
-
 # All features
 index_commun = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27]
 index_particular = [20, 21, 22, 23]
 normalization_value_commun = [12, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.29, 0.54, 0.54, 0.54, 0.54]
 normalization_value_particular = [8, 4, 1, 7.5]
-
-# Linear regression feature seleciton
-# index_commun = [0, 2, 19, 24, 25, 26, 27]
-# index_particular = [20, 21, 22, 23]
-# normalization_value_commun = [12, 24, 0.29, 0.54, 0.54, 0.54, 0.54]
-# normalization_value_particular = [8, 4, 1, 7.5]
 
 nb_buildings = int(input("Entrer le nombre de buildings : "))
 
@@ -145,68 +133,6 @@ class EnvCityGym(gym.Env):
     def render(self): #, mode='human'):
         return self.env.render()
 
-class CustomEnvCityLearn(gym.Env):
-    """
-    Env wrapper coming from the gym library.
-    """
-    def __init__(self, env):
-        self.env = env
-
-        # get the number of buildings
-        self.num_buildings = len(env.action_space)
-
-        # define action and observation space
-        self.action_space = gym.spaces.Box(low=np.array([-1] * 7), high=np.array([1] * 7), dtype=np.float32)
-
-        # define the observation space
-        self.observation_space = gym.spaces.Box(low=0, high=1, dtype=np.float32, shape = (lentot,))
-
-    def reset(self):
-        obs_dict = env_reset(self.env)
-        obs = self.env.reset()
-
-        # observation = []
-        # for i in range(self.num_buildings):
-        #     observation.append(self.get_observation(obs, i))
-
-        observation = self.get_observation(obs)
-
-        return observation
-
-    def get_observation(self, obs):
-
-        observation_commun = [obs[0][i]/n for i, n in zip(index_commun, normalization_value_commun)]
-        observation_particular = [[o[i]/n for i, n in zip(index_particular, normalization_value_particular)] for o in obs]
-        
-        # Si on a que 5 buildings, on "simule" deux buildings fictifs en ajoutant du bruit à la moyenne des mesures des 5 autres
-        if len(obs) == 5:
-            b6 = [np.mean([observation_particular[i][j] for i in range(len(obs))]) for j in range(len(obs[0]))]
-            b7 = [np.mean([observation_particular[i][j] for i in range(len(obs))]) for j in range(len(obs[0]))]
-
-        observation_particular = list(itertools.chain(*observation_particular))
-
-        return obs
-
-    def step(self, action):
-        """
-        we apply the same action for all the buildings
-        """
-        # reprocessing action
-        action = [[act] for act in action]
-
-        # we do a step in the environment
-        obs, reward, done, info = self.env.step(action)
-
-        # observation = []
-        # for i in range(len(obs)):
-        #     observation.self.get_observation(obs, i)
-
-        observation = self.get_observation(obs)
-
-        return observation, sum(reward), done, info
-        
-    def render(self): #, mode='human'):
-        return self.env.render()
 
 # Définition de l'environnement
 env = CityLearnEnv(schema='./data/citylearn_challenge_2022_phase_1/schema_{}.json'.format(nb_buildings))
@@ -242,12 +168,3 @@ model.save(name)
 
 print("Training over")
 
-# model = SAC.load("sac_citylearn1")
-
-# obs = env.reset()
-# while True:
-#     action, _states = model.predict(obs, deterministic=True)
-#     obs, reward, done, info = env.step(action)
-#     env.render()
-#     if done:
-#         obs = env.reset()

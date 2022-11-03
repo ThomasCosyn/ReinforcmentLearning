@@ -501,3 +501,147 @@ class MARLISA:
                         target_param.data.copy_(
                             target_param.data * (1.0 - self.tau) + param.data * self.tau
                         )
+
+# from citylearn import CityLearn
+# !pip3 install sklearn
+import matplotlib.pyplot as plt
+from pathlib import Path
+import numpy as np
+from tqdm import tqdm
+import time
+from citylearn.citylearn import CityLearnEnv
+
+# Custom configure enviroment 
+class Constants:
+    episodes = 3
+    schema_path = './data/citylearn_challenge_2022_phase_1/schema.json'
+
+def action_space_to_dict(aspace):
+    """ Only for box space """
+    return { "high": aspace.high,
+             "low": aspace.low,
+             "shape": aspace.shape,
+             "dtype": str(aspace.dtype)
+    }
+
+def env_reset(env):
+    observations = env.reset()
+    action_space = env.action_space
+    observation_space = env.observation_space
+    building_info = env.get_building_information()
+    building_info = list(building_info.values())
+    action_space_dicts = [action_space_to_dict(asp) for asp in action_space]
+    observation_space_dicts = [action_space_to_dict(osp) for osp in observation_space]
+    obs_dict = {"action_space": action_space_dicts,
+                "observation_space": observation_space_dicts,
+                "building_info": building_info,
+                "observation": observations }
+    return obs_dict
+
+env = CityLearnEnv(schema=Constants.schema_path)
+
+observations_spaces, actions_spaces = env.observation_space, env.action_space
+
+building_info = env.get_building_information()
+
+def RenameBuilding(Building_Info):
+    newB = {}
+    for i, building in enumerate(Building_Info):
+        newB["Building_"+str(i+1)] = building_info[building]
+    return newB
+
+building_info = RenameBuilding(building_info)
+
+import json
+
+def GenStateActionFromJson(JsonPath, BuildingCount = 5):
+
+    with open(JsonPath) as json_file:
+        buildings_states_actions = json.load(json_file)
+
+    States = buildings_states_actions['observations']
+    Actions = buildings_states_actions['actions']
+
+    StateINFo = {}
+    ActionINFo = {}
+    INFos = {}
+    
+    for var, ins in States.items():
+        #print(var, " <><> ", ins)
+        if ins['active']:
+            StateINFo[var] = ins['active']
+    for act, ins  in Actions.items():
+        if ins['active']:
+            ActionINFo[act] = ins['active']
+
+    INFos["states"] = StateINFo
+    INFos["action"] = ActionINFo
+
+    return {"Building_" + str(key): INFos for key in range(1,BuildingCount+1)}
+
+
+JsonFile = 'data/citylearn_challenge_2022_phase_1/schema.json'
+BuildingsStatesActions = GenStateActionFromJson(JsonFile, BuildingCount = 5)
+
+params_agent = {'building_ids':["Building_"+str(i) for i in [1,2,3,4,5]],
+                 'buildings_states_actions':BuildingsStatesActions, 
+                 'building_info':building_info,
+                 'observation_spaces':observations_spaces, 
+                 'action_spaces':actions_spaces, 
+                 'hidden_dim':[256,256], 
+                 'discount':1/12, 
+                 'tau':5e-3, 
+                 'lr':3e-4, 
+                 'batch_size':256, 
+                 'replay_buffer_capacity':1e5, 
+                 'regression_buffer_capacity':3e4, 
+                 'start_training':600, # Start updating actor-critic networks
+                 'exploration_period':7500, # Just taking random actions
+                 'start_regression':500, # Start training the regression model
+                 'information_sharing':True, # If True -> set the appropriate 'reward_function_ma' in reward_function.py
+                 'pca_compression':.95, 
+                 'action_scaling_coef':0.5, # Actions are multiplied by this factor to prevent too aggressive actions
+                 'reward_scaling':5., # Rewards are normalized and multiplied by this factor
+                 'update_per_step':2, # How many times the actor-critic networks are updated every hourly time-step
+                 'iterations_as':2,# Iterations of the iterative action selection (see MARLISA paper for more info)
+                 'safe_exploration':True} 
+
+agents = MARLISA(**params_agent)
+
+RUNTIME = 30*24
+shortcut = True
+cutshort = True
+# We will use 1 episode if we intend to simulate a real-time RL controller (like in the CityLearn Challenge)
+# In climate zone 5, 1 episode contains 5 years of data, or 8760*5 time-steps.
+n_episodes = 1
+start = time.time()
+for e in tqdm(range(n_episodes)): 
+    state = env.reset()
+    done = False
+    
+    j = 0
+    is_evaluating = False
+    action, coordination_vars = agents.select_action(state, deterministic=is_evaluating)
+
+    while (not done) and shortcut:
+        next_state, reward, done, _ = env.step(action)
+        action_next, coordination_vars_next = agents.select_action(next_state, deterministic=is_evaluating)
+        agents.add_to_buffer(state, action, reward, next_state, done, coordination_vars, coordination_vars_next)
+        coordination_vars = coordination_vars_next
+        state = next_state
+        action = action_next
+
+        if j%(24*30) == 0:
+            print(f' We are now in step <><><> {j}, with score >> {env.evaluate()}')
+        # if cutshort:
+        #     is_evaluating = (j > (3*RUNTIME)/2)
+        #     j += 1
+        
+        is_evaluating = (j > 3*8760)
+        j += 1
+        
+        # if j >= RUNTIME:
+        #     shortcut = False
+        
+    print('Loss -',env.evaluate(), 'Simulation time (min) -',(time.time()-start)/60.0)
+    # CPU training for 603mins 
