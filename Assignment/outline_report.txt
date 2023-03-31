@@ -1,0 +1,7 @@
+- agents and comaprision : ok
+- state-value plot
+- parameter sweep
+	- adding epsilon decay
+- transpose to other env
+	- screen-v0
+	- original game

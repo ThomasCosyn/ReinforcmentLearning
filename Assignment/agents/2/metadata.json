@@ -1,0 +1,8 @@
+{
+    "agent_type" : "SARSA",
+    "num_episodes" : 50000,
+    "epsilon" : 0.01,
+    "step_size" : 0.1,
+    "discount" : 0.95,
+    "epsilon_decay" : 1
+}
